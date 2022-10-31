@@ -165,6 +165,12 @@ public:
                 << std::endl;
     }
 
+    Phone(int screen_width, int screen_height)
+            : screen(screen_width, screen_height),
+              mobile_network_technologies() {
+        std::cout << "Phone(int screen_width, int screen_height)" << std::endl;
+    }
+
     Phone(const Phone &phone) : screen(phone.screen),
                                 mobile_network_technologies(phone.mobile_network_technologies) {
         std::cout << "Phone(const Phone &phone)" << std::endl;
@@ -208,7 +214,7 @@ public:
 class Smartphone : public Phone {
 private:
     ROM rom;
-    Camera camera;
+    Camera *camera;
 
 public:
     Smartphone() : Phone(
@@ -219,27 +225,34 @@ public:
         std::cout << "Smartphone()" << std::endl;
     }
 
-    Smartphone(std::vector<NetworkTechnology> mobile_network_technologies, int screen_width, int screen_height) : Phone(
-            std::move(mobile_network_technologies), screen_width, screen_height), rom(ROM::PixelExperience), camera() {
+    Smartphone(int screen_width, int screen_height) : Phone(std::vector<NetworkTechnology>{
+            NetworkTechnology::EDGE, NetworkTechnology::GPRS,
+            NetworkTechnology::HSPA, NetworkTechnology::UMTS
+    }, screen_width, screen_height), rom(ROM::PixelExperience), camera() {
         std::cout
-                << "Smartphone(std::vector<NetworkTechnology> mobile_network_technologies, int screen_width, int screen_height)"
+                << "Smartphone(int screen_width, int screen_height)"
                 << std::endl;
     }
 
-    Smartphone(std::vector<NetworkTechnology> mobile_network_technologies, int screen_width, int screen_height, ROM rom)
+    Smartphone(int screen_width, int screen_height, ROM rom)
             : Phone(
-            std::move(mobile_network_technologies), screen_width, screen_height), rom(rom), camera() {
+            std::vector<NetworkTechnology>{
+                    NetworkTechnology::EDGE, NetworkTechnology::GPRS,
+                    NetworkTechnology::HSPA, NetworkTechnology::UMTS
+            }, screen_width, screen_height), rom(rom), camera() {
         std::cout
-                << "Smartphone(std::vector<NetworkTechnology> mobile_network_technologies, int screen_width, int screen_height, ROM rom)"
+                << "Smartphone(int screen_width, int screen_height, ROM rom)"
                 << std::endl;
     }
 
-    Smartphone(std::vector<NetworkTechnology> mobile_network_technologies, int screen_width, int screen_height, ROM rom,
-               const Camera &camera) : Phone(
-            std::move(mobile_network_technologies), screen_width, screen_height), rom(rom), camera(camera) {
-        std::cout
-                << "Smartphone(std::vector<NetworkTechnology> mobile_network_technologies, int screen_width, int screen_height, ROM rom, Camera camera)"
-                << std::endl;
+    Smartphone(int screen_width, int screen_height, ROM rom, const Camera &camera) :
+            Phone(std::vector<NetworkTechnology>{
+                    NetworkTechnology::EDGE, NetworkTechnology::GPRS,
+                    NetworkTechnology::HSPA, NetworkTechnology::UMTS
+            }, screen_width, screen_height), rom(rom) {
+
+        this->camera = new Camera(camera);
+        std::cout << "Smartphone(int screen_width, int screen_height, ROM rom, Camera camera)" << std::endl;
     }
 
     Smartphone(const Smartphone &smartphone) : Phone(smartphone),
@@ -248,74 +261,147 @@ public:
         std::cout << "Smartphone(const Smartphone &smartphone)" << std::endl;
     }
 
-    ~Smartphone() { std::cout << "~Smartphone()" << std::endl; }
+    void change_rom(ROM new_rom);
+
+    ROM get_rom() const { return rom; }
+
+    ~Smartphone() {
+        delete camera;
+        std::cout << "~Smartphone()" << std::endl;
+    }
 
 };
+
+void Smartphone::change_rom(ROM new_rom) {
+    rom = new_rom;
+}
 
 
 void print_headline(const std::string &text) {
     set_color(4);
-    std::cout << text;
+    std::cout << text << std::endl;
     set_color(7);
 }
 
 void dynamic_test() {
-    print_headline("\nDynamic\n");
+    print_headline("\nDynamic");
+    print_headline("Creating smartphone with camera:");
+    auto *first_smartphone = new Smartphone(
+            800,
+            600,
+            ROM::PixelExperience,
+            Camera(
+                    8192,
+                    6188,
+                    1.0,
+                    true
+            )
+    );
+
+    print_headline("Creating smartphone without camera:");
+    auto *second_smartphone = new Smartphone(
+            800,
+            600,
+            ROM::PixelExperience
+    );
+
+    print_headline("Turning on smartphone with camera...");
+    if (!first_smartphone->is_working())
+        first_smartphone->turn_on();
+    else
+        first_smartphone->turn_off(); // Never called
+
+    print_headline("Get ROM (with Camera):");
+    std::cout << first_smartphone->get_rom() << std::endl;
+
+    print_headline("Change ROM from PixelExperience (4) to ColorOS (5) (with Camera)...");
+    first_smartphone->change_rom(ROM::ColorOS);
+
+    print_headline("Get ROM (with Camera):");
+    std::cout << first_smartphone->get_rom() << std::endl;
+
+    print_headline("Delete smartphone (with Camera):");
+    delete first_smartphone;
+    print_headline("Delete smartphone (without Camera):");
+    delete second_smartphone;
+
+    print_headline("\nArray with dynamic objects ");
     Phone *phonesDynamic[2];
-    print_headline("1) Setting smartphone\n");
+    print_headline("1) Setting smartphone");
     phonesDynamic[0] = new Smartphone();
-    print_headline("2) Setting touchtone\n");
+    print_headline("2) Setting touchtone");
     phonesDynamic[1] = new TouchTone();
 
-    print_headline("Check if phones are working (1):\n");
+    print_headline("Check if phones are working (1):");
     for (auto item: phonesDynamic)
         std::cout << item->is_working() << std::endl;
 
-    print_headline("Turning on phones...\n");
+    print_headline("Turning on phones...");
     for (auto item: phonesDynamic)
         item->turn_on();
 
-    print_headline("Check if phones are working (2):\n");
+    print_headline("Check if phones are working (2):");
     for (auto item: phonesDynamic)
         std::cout << item->is_working() << std::endl;
 
-    print_headline("Deleting elements manually:\n");
+    print_headline("Deleting elements manually:");
     for (auto item: phonesDynamic)
         delete item;
+
+    print_headline("Script stopped working.");
 }
 
 void static_test() {
-    print_headline("\nStatic\n");
+    print_headline("\nStatic");
+    print_headline("\nArray with static objects");
     Phone phonesStatic[2];
-    print_headline("1) Setting smartphone\n");
+    print_headline("1) Setting smartphone");
     phonesStatic[0] = Smartphone();
-    print_headline("2) Setting touchtone\n");
+    print_headline("2) Setting touchtone");
     phonesStatic[1] = TouchTone();
 
-    print_headline("Check if phones are working (1):\n");
+    print_headline("Check if phones are working (1):");
     for (const auto &item: phonesStatic)
         std::cout << item.is_working() << std::endl;
 
-    print_headline("Turning on phones...\n");
+    print_headline("Turning on phones...");
     for (auto &item: phonesStatic)
         item.turn_on();
 
-    print_headline("Check if phones are working (2):\n");
+    print_headline("Check if phones are working (2):");
     for (const auto &item: phonesStatic)
         std::cout << item.is_working() << std::endl;
+
+    print_headline("Objects will be deleted automatically.");
+}
+
+void delete_test() {
+    print_headline("Creating first smartphone (var type Smartphone):");
+    Smartphone *first_smartphone = new Smartphone();
+    print_headline("Creating second smartphone (var type Phone):");
+    Phone *second_smartphone = new Smartphone();
+
+    print_headline("Deleting first smartphone (var type Smartphone):");
+    delete first_smartphone;
+    print_headline("Deleting second smartphone (var type Phone):");
+    delete second_smartphone;
 }
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
     int n;
-    print_headline("Выберите вариант:\n");
-    std::cout << "1) Динамическая инициализация с наследованием" << std::endl
-              << "2) Статическая инициализация с наследованием" << std::endl;
+    print_headline("Выберите вариант:");
+    std::cout << "1) Динамическая инициализация" << std::endl
+              << "2) Статическая инициализация" << std::endl
+              << "3) Уничтожение объектов классов-наследников" << std::endl;
     std::cin >> n;
     if (n == 1)
         dynamic_test();
-    else
+    else if (n == 2)
         static_test();
+    else if (n == 3)
+        delete_test();
+    print_headline("End of the program");
     return 0;
 }
 
